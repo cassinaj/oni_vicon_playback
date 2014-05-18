@@ -146,8 +146,15 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
             break;
         }
 
+        ros::Time stamp;
+        // this is the shifted time
+        // stamp.fromNSec(startup_time.toNSec() + vicon_pose_record.stamp.toNSec());
+
+        // for display puposes
+        stamp = ros::Time::now();
+
         // set meta data and publish
-        depth_msg->header.stamp.fromNSec(startup_time.toNSec() + vicon_pose_record.stamp.toNSec());
+        depth_msg->header.stamp = stamp;
         depth_msg->header.frame_id = depth_frame_id_;
 
         // publish visualization data (depth image, point cloud, vicon pose marker)
@@ -156,30 +163,12 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
                 depth_msg,
                 playback_->transformer().localCalibration().objectDisplay());
 
-        /*
-        tf_broadcaster_.sendTransform(
-                    tf::StampedTransform(
-                        playback_->transformer().globalCalibration().viconToCameraTransform(),
-                        ros::Time(depth_msg->header.stamp.toSec()-10., 0),
-                        depth_frame_id_,
-                        "vicon_global_frame"));
-        */
-
         tf_broadcaster_.sendTransform(
                     tf::StampedTransform(
                         playback_->transformer().globalCalibration().viconToCameraTransform(),
                         depth_msg->header.stamp,
                         depth_frame_id_,
                         "vicon_global_frame"));
-
-        /*
-        tf_broadcaster_.sendTransform(
-                    tf::StampedTransform(
-                        playback_->transformer().globalCalibration().viconToCameraTransform(),
-                        ros::Time(depth_msg->header.stamp.toSec()+10., 0),
-                        depth_frame_id_,
-                        "vicon_global_frame"));
-        */
 
         // publish evaluation data
         feedback.current_time = frame_id / 30.;

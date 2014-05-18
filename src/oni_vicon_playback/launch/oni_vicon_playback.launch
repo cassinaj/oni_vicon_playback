@@ -18,7 +18,7 @@
   
   
   <!-- Load reasonable defaults for the relative pose between cameras -->
-  <include file="$(find oni_vicon_player)/launch/arm_rgbd_frames.launch">
+  <include file="$(find oni_vicon_playback)/launch/arm_rgbd_frames.launch">
     <param name="camera" type="string" value="/$(arg camera)"/>
   </include>
 </launch>
