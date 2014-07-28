@@ -35,6 +35,7 @@ add_service_files(
   Pause.srv
   SeekFrame.srv
   SetPlaybackSpeed.srv
+  SetTimeOffset.srv
 )
 
 ## Generate actions in the 'action' folder

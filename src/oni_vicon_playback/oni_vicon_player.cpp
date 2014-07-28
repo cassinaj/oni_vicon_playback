@@ -139,6 +139,35 @@ uint32_t OniViconPlayer::nextFrame()
     return oni_player_->currentFrameID();
 }
 
+const ViconPlayer::PoseRecord &OniViconPlayer::currentViconPose()
+{
+    // get the first record of the oni frame id
+    ViconPlayer::PoseRecord pose_record = vicon_player_->pose(oni_player_->currentFrameID());
+
+    // get the closest vicon frame according to device timestamp
+    ViconPlayer::RawRecord selected_record = vicon_player_->closestViconFrame(
+                pose_record,
+                oni_player_->currentTimestamp());
+
+    tf::Vector3 translation;
+    tf::Quaternion orientation;
+
+    translation.setX(selected_record.translation_x);
+    translation.setY(selected_record.translation_y);
+    translation.setZ(selected_record.translation_z);
+
+    orientation.setW(selected_record.orientation_w);
+    orientation.setX(selected_record.orientation_x);
+    orientation.setY(selected_record.orientation_y);
+    orientation.setZ(selected_record.orientation_z);
+
+    pose_record.pose.setOrigin(translation);
+    pose_record.pose.setRotation(orientation);
+
+    // transform into depth sensor frame
+    pose_record.pose = calibration_transform_.viconPoseToCameraPose(pose_record.pose);
+}
+
 void OniViconPlayer::seekToFrame(uint32_t starting_frame)
 {
     oni_player_->seekToFrame(starting_frame);
@@ -176,4 +205,14 @@ ViconPlayer::Ptr OniViconPlayer::viconPlayer()
 const Transformer &OniViconPlayer::transformer() const
 {
     return calibration_transform_;
+}
+
+void OniViconPlayer::viconCameraTimeOffset(double vicon_camera_offset)
+{
+    vicon_player_->viconCameraTimeOffset(vicon_camera_offset);
+}
+
+double OniViconPlayer::viconCameraTimeOffset() const
+{
+    return vicon_player_->viconCameraTimeOffset();
 }

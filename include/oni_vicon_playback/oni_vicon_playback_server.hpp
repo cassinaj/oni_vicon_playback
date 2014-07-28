@@ -63,6 +63,7 @@
 #include <oni_vicon_playback/Pause.h>
 #include <oni_vicon_playback/SeekFrame.h>
 #include <oni_vicon_playback/SetPlaybackSpeed.h>
+#include <oni_vicon_playback/SetTimeOffset.h>
 
 #include <oni_vicon_common/type_conversion.hpp>
 #include <oni_vicon_common/exceptions.hpp>
@@ -93,13 +94,19 @@ namespace oni_vicon_playback
         bool setPlaybackSpeedCb(SetPlaybackSpeed::Request& request,
                                 SetPlaybackSpeed::Response& response);
 
+        bool setTimeOffset(SetTimeOffset::Request& request,
+                           SetTimeOffset::Response& response);
+    public:
+
         void loadUpdateCb(uint32_t total_frames, uint32_t frames_loaded);
 
         void publish(sensor_msgs::ImagePtr image);
 
         void publish(const tf::Pose& pose,
                      sensor_msgs::ImagePtr corresponding_image,
-                     const std::string& object_display);
+                     const std::string& object_display,
+                     const std::string &suffix = "",
+                     double r = 1., double g = 0., double b = 0.);
 
         sensor_msgs::ImagePtr depthFrameAsMsgImage();
         sensor_msgs::PointCloud2Ptr depthFrameAsMsgPointCloud();
@@ -138,6 +145,7 @@ namespace oni_vicon_playback
         ros::ServiceServer pause_srv_;
         ros::ServiceServer seek_frame_srv_;
         ros::ServiceServer set_playback_speed_srv_;
+        ros::ServiceServer set_time_offset_srv_;
 
         bool paused_;
         XnUInt32 seeking_frame_;

@@ -99,6 +99,13 @@ namespace oni_vicon_playback
         sensor_msgs::ImagePtr currentDepthImageMsg();
         sensor_msgs::PointCloud2Ptr currentPointCloud2Msg();
 
+        /**
+         * @brief Returns the timestamp of the sensorin seconds
+         *
+         * @return sensor timestamp in seconds
+         */
+        double currentTimestamp() const;
+
         uint32_t countFrames() const;
 
     public:

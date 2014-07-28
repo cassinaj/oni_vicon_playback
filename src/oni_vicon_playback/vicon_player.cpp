@@ -53,8 +53,9 @@ using namespace oni_vicon;
 using namespace oni_vicon_playback;
 
 ViconPlayer::ViconPlayer():
-    start_offset_(0),
-    time_is_in_ms_(false)
+    start_frame_offset_(0),
+    start_time_offset_(0),
+    vicon_camera_offset_(0)
 {
 
 }
@@ -70,8 +71,6 @@ bool ViconPlayer::load(const std::string& source_file,
 {    
     std::ifstream data_file(source_file.c_str());
 
-//    std::ofstream process_data((source_file + ".processed").c_str());
-
     if (!data_file.is_open())
     {
         return false;
@@ -83,6 +82,9 @@ bool ViconPlayer::load(const std::string& source_file,
     RawRecord previous_record;
     RawRecord record;
     RawRecord selected_record;
+
+    data_file >> vicon_camera_offset_;
+
     while (data_file.peek() != EOF)
     {
         previous_record = record;
@@ -104,11 +106,6 @@ bool ViconPlayer::load(const std::string& source_file,
 
         if (record.depth_sensor_frame == 0)
         {
-            if (record.vicon_time < 1e3)
-            {
-                time_is_in_ms_ = true;
-            }
-
             previous_record = record;
             continue;
         }
@@ -116,15 +113,19 @@ bool ViconPlayer::load(const std::string& source_file,
         if (previous_record.depth_sensor_frame == 0
             && record.depth_sensor_frame != 0)
         {
-            start_offset_ = record.depth_sensor_frame - 1;
+            start_frame_offset_ = record.depth_sensor_frame - 1;
+            start_time_offset_ = record.vicon_time;
         }
 
-        record.depth_sensor_frame -= start_offset_;
+        raw_data_.back().vicon_file_time = raw_data_.back().vicon_time;
+        raw_data_.back().vicon_time -= start_time_offset_;
 
         if (record.depth_sensor_frame == previous_record.depth_sensor_frame)
         {
             continue;
         }
+
+        record.depth_sensor_frame -= start_frame_offset_;
 
         PoseRecord pose_record;
         tf::Vector3 translation;
@@ -140,21 +141,7 @@ bool ViconPlayer::load(const std::string& source_file,
         orientation.setX(selected_record.orientation_x);
         orientation.setY(selected_record.orientation_y);
         orientation.setZ(selected_record.orientation_z);
-/*
-        process_data << selected_record.vicon_time << " ";
-        process_data << selected_record.vicon_frame << " ";
-        process_data << record.depth_sensor_time << " ";
-        process_data << record.depth_sensor_frame << " ";
-        process_data << selected_record.vicon_frame_id << " ";
-        process_data << selected_record.translation_x << " ";
-        process_data << selected_record.translation_y << " ";
-        process_data << selected_record.translation_z << " ";
-        process_data << selected_record.orientation_w << " ";
-        process_data << selected_record.orientation_x << " ";
-        process_data << selected_record.orientation_y << " ";
-        process_data << selected_record.orientation_z;
-        process_data << std::endl;
-*/
+
         pose_record.stamp.fromSec(record.depth_sensor_time * 1e-3);
         pose_record.pose.setOrigin(translation);
         pose_record.pose.setRotation(orientation);
@@ -162,25 +149,24 @@ bool ViconPlayer::load(const std::string& source_file,
         // transform into depth sensor frame
         pose_record.pose = calibration_transform.viconPoseToCameraPose(pose_record.pose);
 
+        pose_record.vicon_frame = record.vicon_frame;
         data_[record.depth_sensor_frame] = pose_record;
 
         update_cb(0, data_.size());
 
-        if (countDepthSensorFrames() != record.depth_sensor_frame)
-        {
-            ROS_WARN("%ud != %ud", countDepthSensorFrames(), record.depth_sensor_frame);
-        }
+//        if (countDepthSensorFrames() != record.depth_sensor_frame)
+//        {
+//            ROS_WARN("%ud != %ud", countDepthSensorFrames(), record.depth_sensor_frame);
+//        }
     }
 
     data_file.close();
-
-//    process_data.close();
 
     return true;
 }
 
 const ViconPlayer::PoseRecord& ViconPlayer::pose(uint32_t frame)
-{
+{        
     return data_[frame];
 }
 
@@ -196,7 +182,7 @@ uint32_t ViconPlayer::countDepthSensorFrames() const
 
 ViconPlayer::RawRecord ViconPlayer::closestViconFrame(const ViconPlayer::RawRecord& oni_frame)
 {
-    std::vector<RawRecord>::reverse_iterator rit = raw_data_.rbegin();
+    std::vector<RawRecord>::reverse_iterator rit;// = raw_data_.rbegin();
 
     RawRecord selected_record;
 
@@ -220,3 +206,45 @@ ViconPlayer::RawRecord ViconPlayer::closestViconFrame(const ViconPlayer::RawReco
     return selected_record;
 }
 
+ViconPlayer::RawRecord ViconPlayer::closestViconFrame(const ViconPlayer::PoseRecord& oni_frame,
+                                                      double timestamp)
+{
+    std::vector<RawRecord>::reverse_iterator rit;
+
+    RawRecord selected_record;
+
+    int64_t positive_shift = std::max(vicon_camera_offset_ * 100., 0.);
+    int64_t r_offset = int64_t(oni_frame.vicon_frame) + positive_shift;
+
+    // reverse the index offset
+    r_offset = std::max(int64_t(raw_data_.size()) - r_offset, int64_t(0));
+
+    for (rit = raw_data_.rbegin() + r_offset; rit != raw_data_.rend(); ++rit)
+    {
+        if (rit == raw_data_.rbegin() + r_offset)
+        {
+            selected_record = *rit;
+        }
+        else if (std::fabs(timestamp + vicon_camera_offset_ - rit->vicon_time) >=
+                 std::fabs(timestamp + vicon_camera_offset_ - selected_record.vicon_time))
+        {
+            break;
+        }
+        else
+        {
+            selected_record = *rit;
+        }
+    }
+
+    return selected_record;
+}
+
+void ViconPlayer::viconCameraTimeOffset(double vicon_camera_offset)
+{
+    vicon_camera_offset_ = vicon_camera_offset;
+}
+
+double ViconPlayer::viconCameraTimeOffset() const
+{
+    return vicon_camera_offset_;
+}

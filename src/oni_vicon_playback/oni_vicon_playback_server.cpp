@@ -89,6 +89,10 @@ OniViconPlaybackServer::OniViconPlaybackServer(ros::NodeHandle& node_handle,
                                                            &OniViconPlaybackServer::setPlaybackSpeedCb,
                                                            this);
 
+    set_time_offset_srv_ = node_handle.advertiseService(SetTimeOffset::Request::SERVICE_NAME,
+                                                        &OniViconPlaybackServer::setTimeOffset,
+                                                        this);
+
     pub_depth_image_ = image_transport_.advertise("depth/image", 100);
     pub_depth_info_ = node_handle.advertise<sensor_msgs::CameraInfo>("depth/camera_info", 100);
     pub_point_cloud_ = node_handle.advertise<sensor_msgs::PointCloud2>("depth/points", 100);
@@ -139,6 +143,7 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
 
         // get depth sensor frame and corresponding vicon frame
         sensor_msgs::ImagePtr depth_msg = playback_->oniPlayer()->currentDepthImageMsg();
+        ViconPlayer::PoseRecord vicon_pose_record_dts = playback_->currentViconPose();
         ViconPlayer::PoseRecord vicon_pose_record = playback_->viconPlayer()->pose(frame_id);
 
         if (vicon_pose_record.stamp.isZero())
@@ -161,7 +166,15 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
         publish(depth_msg);
         publish(vicon_pose_record.pose,
                 depth_msg,
-                playback_->transformer().localCalibration().objectDisplay());
+                playback_->transformer().localCalibration().objectDisplay(),
+                "_system_stamp",
+                0, 0.8, 1);
+
+        publish(vicon_pose_record_dts.pose,
+                depth_msg,
+                playback_->transformer().localCalibration().objectDisplay(),
+                "_device_stamp",
+                1, 0, 0);
 
         tf_broadcaster_.sendTransform(
                     tf::StampedTransform(
@@ -210,6 +223,7 @@ void OniViconPlaybackServer::openCb(const OpenGoalConstPtr& goal)
     feedback_.total_time = playback_->oniPlayer()->countFrames() / 30;
     feedback_.total_vicon_frames = feedback_.total_time * 100;
     feedback_.total_depth_sensor_frames = playback_->oniPlayer()->countFrames();
+    feedback_.time_offet = playback_->viconCameraTimeOffset();
     open_as_.publishFeedback(feedback_);
 
     // wait until stopped
@@ -260,6 +274,14 @@ bool OniViconPlaybackServer::setPlaybackSpeedCb(SetPlaybackSpeed::Request& reque
     return playback_->oniPlayer()->setPlaybackSpeed(request.speed);
 }
 
+bool OniViconPlaybackServer::setTimeOffset(SetTimeOffset::Request& request,
+                                           SetTimeOffset::Response& response)
+{
+    playback_->viconCameraTimeOffset(request.time_offset);
+
+    return true;
+}
+
 void OniViconPlaybackServer::loadUpdateCb(uint32_t total_frames, uint32_t frames_loaded)
 {
     if (total_frames > 0)
@@ -305,19 +327,21 @@ void OniViconPlaybackServer::publish(sensor_msgs::ImagePtr depth_msg)
 
 void OniViconPlaybackServer::publish(const tf::Pose& pose,
                              sensor_msgs::ImagePtr corresponding_image,
-                             const std::string& object_display)
+                             const std::string& object_display,
+                             const std::string& suffix,
+                             double r, double g, double b)
 {
     visualization_msgs::Marker marker;
     marker.header.frame_id = corresponding_image->header.frame_id;
     marker.header.stamp =  corresponding_image->header.stamp;
-    marker.ns = "vicon_object_pose";
+    marker.ns = "vicon_object_pose" + suffix;
     marker.id = 0;
     marker.scale.x = 1.0;
     marker.scale.y = 1.0;
     marker.scale.z = 1.0;
-    marker.color.r = 1;
-    marker.color.g = 0;
-    marker.color.b = 0;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
     marker.color.a = 1;
 
     marker.type = visualization_msgs::Marker::MESH_RESOURCE;

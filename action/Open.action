@@ -5,6 +5,7 @@ string record_path
 string message
 ---
 bool open
+float64 time_offet
 int64 progress
 int64 progress_max
 float64 total_time

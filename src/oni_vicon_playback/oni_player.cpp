@@ -161,6 +161,11 @@ sensor_msgs::PointCloud2Ptr OniPlayer::currentPointCloud2Msg()
     return cache_msg_pointcloud_;
 }
 
+double OniPlayer::currentTimestamp() const
+{
+    return double(depth_meta_data_.Timestamp() * 1e-6);
+}
+
 uint32_t OniPlayer::currentFrameID() const
 {
     return depth_meta_data_.FrameID();

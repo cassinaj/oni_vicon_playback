@@ -84,7 +84,7 @@ namespace oni_vicon_playback
          * @param vicon_player  Used ViconPlayer to read the vicon poses
          */
         OniViconPlayer(OniPlayer::Ptr oni_player,
-                         ViconPlayer::Ptr vicon_player);
+                       ViconPlayer::Ptr vicon_player);
 
         /**
          * @brief open opens an ONI-Vicon recording
@@ -115,6 +115,14 @@ namespace oni_vicon_playback
          * @return
          */
         uint32_t nextFrame();
+
+        /**
+         * @brief pose
+         *
+         * @param frame
+         * @return
+         */
+        const ViconPlayer::PoseRecord& currentViconPose();
 
         /**
          * @brief seekToFrame
@@ -165,6 +173,9 @@ namespace oni_vicon_playback
          */
         const oni_vicon::Transformer& transformer() const;
 
+        void viconCameraTimeOffset(double vicon_camera_offset);
+
+        double viconCameraTimeOffset() const;
     private:
         OniPlayer::Ptr oni_player_;
         ViconPlayer::Ptr vicon_player_;

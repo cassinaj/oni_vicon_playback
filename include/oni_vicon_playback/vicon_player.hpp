@@ -83,9 +83,10 @@ namespace oni_vicon_playback
 
         struct RawRecord
         {
-            int64_t vicon_time;
+            double vicon_time;
+            double vicon_file_time;
             uint32_t vicon_frame;
-            int64_t depth_sensor_time;
+            double depth_sensor_time;
             uint32_t depth_sensor_frame;
             uint32_t vicon_frame_id;
             float translation_x;
@@ -94,13 +95,14 @@ namespace oni_vicon_playback
             float orientation_w;
             float orientation_x;
             float orientation_y;
-            float orientation_z;
+            float orientation_z;            
         };
 
         struct PoseRecord
         {
             ros::Time stamp;
             tf::Pose pose;
+            uint32_t vicon_frame;
         };
 
     public:
@@ -111,20 +113,41 @@ namespace oni_vicon_playback
                   const oni_vicon::Transformer& calibration_transform,
                   LoadUpdateCallback update_cb = LoadUpdateCallback());
 
+        /**
+         * @brief Selects the temporally closest vicon frame to specified oni frame using
+         *        system wall time
+         *
+         * @param frame         oni frame id (no.)
+         *
+         * @return Temporally closest vicon frame
+         */
         const PoseRecord& pose(uint32_t frame);
-
 
         uint32_t countViconFrames() const;
         uint32_t countDepthSensorFrames() const;
 
-    private:        
         RawRecord closestViconFrame(const RawRecord& oni_frame);
 
+        /**
+         * @brief Selects the temporally closest vicon frame to specified oni frame
+         *
+         * @param oni_frame         oni frame id
+         * @param timestamp         oni frame timestamp in nano-seconds
+         *
+         * @return  Temporally closest vicon frame
+         */
+        RawRecord closestViconFrame(const PoseRecord &oni_frame, double timestamp);
+
+        void viconCameraTimeOffset(double vicon_camera_offset);
+        double viconCameraTimeOffset() const;
+
+    private:
         std::vector<RawRecord> raw_data_;
         std::map<uint32_t, PoseRecord> data_;        
 
-        uint32_t start_offset_;
-        bool time_is_in_ms_;
+        uint32_t start_frame_offset_;
+        double start_time_offset_;
+        double vicon_camera_offset_;
     };
 }
 
