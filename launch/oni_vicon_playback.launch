@@ -4,7 +4,7 @@
   <arg name="camera" default="XTION" />
   <arg name="rgb_frame"   default="/$(arg camera)_RGB" />
   <arg name="depth_frame" default="/$(arg camera)_IR" />
-  <arg name="calibration_url"  default="$(find arm_robot_model)/calib/xtion_calib.yaml" />
+  <arg name="calibration_url"  default="$(find eval_spkf)/config/xtion_calib.yaml" />
   <arg name="point_cloud_topic" default="/XTION/depth/points" />
   <arg name="camera_info_topic" default="/XTION/depth/camera_info" />
   

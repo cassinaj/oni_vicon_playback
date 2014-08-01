@@ -152,7 +152,10 @@ bool ViconPlayer::load(const std::string& source_file,
         pose_record.vicon_frame = record.vicon_frame;
         data_[record.depth_sensor_frame] = pose_record;
 
-        update_cb(0, data_.size());
+        if (!update_cb.empty())
+        {
+            update_cb(0, data_.size());
+        }
 
 //        if (countDepthSensorFrames() != record.depth_sensor_frame)
 //        {

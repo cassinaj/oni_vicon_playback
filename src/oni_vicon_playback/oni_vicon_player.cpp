@@ -64,7 +64,7 @@ OniViconPlayer::OniViconPlayer(OniPlayer::Ptr oni_player,
 }
 
 void OniViconPlayer::open(const std::string& record_dir,
-                            ViconPlayer::LoadUpdateCallback update_cb)
+                          ViconPlayer::LoadUpdateCallback update_cb)
 {
     open_ = false;
 
@@ -91,7 +91,10 @@ void OniViconPlayer::open(const std::string& record_dir,
         // open oni file
         oni_player_->open(oni_file, calibration_transform_.cameraIntrinsics());
 
-        update_cb(oni_player_->countFrames(), 0);
+        if (!update_cb.empty())
+        {
+            update_cb(oni_player_->countFrames(), 0);
+        }
 
         // load vicon data
         vicon_player_->load(vicon_file, calibration_transform_, update_cb);

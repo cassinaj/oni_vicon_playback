@@ -118,11 +118,7 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
     feedback.current_vicon_frame = 0;
     feedback.current_depth_sensor_frame = goal->starting_frame;
 
-
-
     playback_->play(goal->starting_frame);
-
-
 
     play_as_.publishFeedback(feedback);
 
