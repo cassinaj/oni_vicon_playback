@@ -84,6 +84,7 @@ bool ViconPlayer::load(const std::string& source_file,
     RawRecord selected_record;
 
     data_file >> vicon_camera_offset_;
+    vicon_camera_offset_ = -0.04; // TODO FIX THIS
 
     while (data_file.peek() != EOF)
     {
@@ -142,7 +143,7 @@ bool ViconPlayer::load(const std::string& source_file,
         orientation.setY(selected_record.orientation_y);
         orientation.setZ(selected_record.orientation_z);
 
-        pose_record.stamp.fromSec(record.depth_sensor_time * 1e-3);
+        pose_record.stamp.fromSec(record.depth_sensor_time);
         pose_record.pose.setOrigin(translation);
         pose_record.pose.setRotation(orientation);
 
@@ -168,7 +169,7 @@ bool ViconPlayer::load(const std::string& source_file,
     return true;
 }
 
-const ViconPlayer::PoseRecord& ViconPlayer::pose(uint32_t frame)
+const ViconPlayer::PoseRecord ViconPlayer::pose(uint32_t frame)
 {        
     return data_[frame];
 }

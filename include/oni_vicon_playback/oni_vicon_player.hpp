@@ -122,7 +122,7 @@ namespace oni_vicon_playback
          * @param frame
          * @return
          */
-        const ViconPlayer::PoseRecord& currentViconPose();
+        ViconPlayer::PoseRecord currentViconPose();
 
         /**
          * @brief seekToFrame

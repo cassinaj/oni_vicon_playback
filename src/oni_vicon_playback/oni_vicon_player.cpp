@@ -142,10 +142,21 @@ uint32_t OniViconPlayer::nextFrame()
     return oni_player_->currentFrameID();
 }
 
-const ViconPlayer::PoseRecord &OniViconPlayer::currentViconPose()
+ViconPlayer::PoseRecord OniViconPlayer::currentViconPose()
 {
     // get the first record of the oni frame id
     ViconPlayer::PoseRecord pose_record = vicon_player_->pose(oni_player_->currentFrameID());
+
+//    std::cout << "sts: ";
+//    std::cout <<pose_record.stamp << " ";
+//    std::cout <<pose_record.vicon_frame << " ";
+//    std::cout <<pose_record.pose.getOrigin().getX() << " ";
+//    std::cout <<pose_record.pose.getOrigin().getY() << " ";
+//    std::cout <<pose_record.pose.getOrigin().getZ() << " ";
+//    std::cout <<pose_record.pose.getRotation().getW() << " ";
+//    std::cout <<pose_record.pose.getRotation().getX() << " ";
+//    std::cout <<pose_record.pose.getRotation().getY() << " ";
+//    std::cout <<pose_record.pose.getRotation().getZ() << std::endl;
 
     // get the closest vicon frame according to device timestamp
     ViconPlayer::RawRecord selected_record = vicon_player_->closestViconFrame(
@@ -169,6 +180,21 @@ const ViconPlayer::PoseRecord &OniViconPlayer::currentViconPose()
 
     // transform into depth sensor frame
     pose_record.pose = calibration_transform_.viconPoseToCameraPose(pose_record.pose);
+    pose_record.vicon_frame = selected_record.vicon_frame;
+    pose_record.stamp.fromSec(selected_record.depth_sensor_time * 1e-3);
+
+//    std::cout << "dts: ";
+//    std::cout <<pose_record.stamp << " ";
+//    std::cout <<pose_record.vicon_frame << " ";
+//    std::cout <<pose_record.pose.getOrigin().getX() << " ";
+//    std::cout <<pose_record.pose.getOrigin().getY() << " ";
+//    std::cout <<pose_record.pose.getOrigin().getZ() << " ";
+//    std::cout <<pose_record.pose.getRotation().getW() << " ";
+//    std::cout <<pose_record.pose.getRotation().getX() << " ";
+//    std::cout <<pose_record.pose.getRotation().getY() << " ";
+//    std::cout <<pose_record.pose.getRotation().getZ() << std::endl;
+
+    return pose_record;
 }
 
 void OniViconPlayer::seekToFrame(uint32_t starting_frame)

@@ -142,6 +142,17 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
         ViconPlayer::PoseRecord vicon_pose_record_dts = playback_->currentViconPose();
         ViconPlayer::PoseRecord vicon_pose_record = playback_->viconPlayer()->pose(frame_id);
 
+        std::cout << "*dts:";
+        std::cout <<vicon_pose_record_dts.stamp << " ";
+        std::cout <<vicon_pose_record_dts.vicon_frame << " ";
+        std::cout <<vicon_pose_record_dts.pose.getOrigin().getX() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getOrigin().getY() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getOrigin().getZ() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getRotation().getW() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getRotation().getX() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getRotation().getY() << " ";
+        std::cout <<vicon_pose_record_dts.pose.getRotation().getZ() << std::endl;
+
         if (vicon_pose_record.stamp.isZero())
         {
             break;

@@ -121,7 +121,7 @@ namespace oni_vicon_playback
          *
          * @return Temporally closest vicon frame
          */
-        const PoseRecord& pose(uint32_t frame);
+        const PoseRecord pose(uint32_t frame);
 
         uint32_t countViconFrames() const;
         uint32_t countDepthSensorFrames() const;
