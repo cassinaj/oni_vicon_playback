@@ -155,6 +155,8 @@ namespace oni_vicon_playback
 
         bool msg_image_dirty_;
         bool msg_pointcloud_dirty_;
+
+        sensor_msgs::PointCloud2Ptr points_msg_;
     };
 }
 

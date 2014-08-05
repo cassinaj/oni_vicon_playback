@@ -84,7 +84,7 @@ bool ViconPlayer::load(const std::string& source_file,
     RawRecord selected_record;
 
     data_file >> vicon_camera_offset_;
-    vicon_camera_offset_ = -0.04; // TODO FIX THIS
+    vicon_camera_offset_ = -0.03; // TODO FIX THIS
 
     while (data_file.peek() != EOF)
     {

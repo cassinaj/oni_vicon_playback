@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
     actionlib
     image_transport
     oni_vicon_common
+    state_filtering
 )
 
 find_package(Boost REQUIRED)
@@ -58,7 +59,7 @@ generate_messages(
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES oni_vicon_playback
-    CATKIN_DEPENDS actionlib_msgs actionlib image_transport oni_vicon_common
+    CATKIN_DEPENDS actionlib_msgs actionlib image_transport oni_vicon_common state_filtering
     DEPENDS OpenNI
 )
 
