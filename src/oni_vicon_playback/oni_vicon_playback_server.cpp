@@ -235,6 +235,9 @@ public:
         some_c_ = getParamValue<double>("/spkf_filter/some_c");
         some_s_ = getParamValue<double>("/spkf_filter/some_s");
 
+        occ_q_ = getParamValue<double>("/spkf_filter/occ_q");
+        occ_r_ = getParamValue<double>("/spkf_filter/occ_r");
+
         stateDesc.timestamp(0);
         predictedStateDesc.timestamp(0);
 
@@ -330,6 +333,9 @@ public:
         validationGate_ = EuclideanValidationGate::Ptr(new EuclideanValidationGate(t));
         spkf->validationGate(validationGate_);
 
+        spkfInternals->occTest = OccTest::Ptr(new OccTest(occ_q_, occ_r_));
+        spkfInternals->occTest->useOcc = getParamValue<bool>("/spkf_filter/apply_occlusion");
+
         stateDesc.mean() = init_state;
         stateDesc.covariance() = ProcessModel::CovarianceType::Identity(
                     BrownianProcessModel<>::Base::VariableSize,
@@ -383,6 +389,8 @@ public:
         if (stateDesc.timestamp() == 0)
         {
             stateDesc.timestamp(ros_cloud->header.stamp.toSec());
+
+            spkfInternals->occTest->init(n_rows*n_cols);
         }
 
         double deltaT = (ros_cloud->header.stamp.toSec() - stateDesc.timestamp());
@@ -411,11 +419,27 @@ public:
                                      some_c_,
                                      some_s_);
 
-        spkfInternals->sigma = some_s_;
-
         //MEASURE("Update preparation")
 
         spkf->update(measurement, predictedStateDesc, stateDesc);
+
+        // estimate occ
+        measurementModel->parameters(camera_matrix_,
+                                     n_rows,
+                                     n_cols,
+                                     availableIndices,
+                                     depth_noise_sigma_,
+                                     mean_depth_,
+                                     uncertain_depth_sigma_,
+                                     measurement_NA_sigma_,
+                                     measurement,
+                                     some_c_,
+                                     some_s_);
+
+        measurementModel->conditionals(stateDesc.mean());
+        spkfInternals->occTest->filter(measurement, measurementModel->predict());
+        spkfInternals->occTest->o_t_ = spkfInternals->occTest->o_t_.array() * measurementModel->mask().array();
+
 
 //        std::cout << "e "
 //                  << stateDesc.mean()(0, 0) << " "
@@ -466,6 +490,9 @@ protected:
     double init_process_sigma_;
     double some_c_;
     double some_s_;
+
+    double occ_r_;
+    double occ_q_;
 
     uint8_t rainbow[0x10000][3];
 

@@ -7,16 +7,17 @@
   <arg name="calibration_url"  default="$(find eval_spkf)/config/xtion_calib.yaml" />
   <arg name="point_cloud_topic" default="/XTION/depth/points" />
   <arg name="camera_info_topic" default="/XTION/depth/camera_info" />
-  
+
   <node pkg="oni_vicon_playback" name="$(arg camera)" type="oni_vicon_playback_node" respawn="false" output="screen">
     <param name="rgb_frame_id"  type="string"  value="$(arg rgb_frame)" />
     <param name="depth_frame_id"  type="string"  value="$(arg depth_frame)" />
-    <param name="calib_url"  type="string"  value="$(arg calibration_url)" />   
-	<param name="point_cloud_topic"    type="string"  value="$(arg point_cloud_topic)" />
-	<param name="camera_info_topic"  type="string"  value="$(arg camera_info_topic)" />
+    <param name="calib_url"  type="string"  value="$(arg calibration_url)" />
+    <param name="point_cloud_topic"    type="string"  value="$(arg point_cloud_topic)" />
+    <param name="camera_info_topic"  type="string"  value="$(arg camera_info_topic)" />
+    <rosparam command="load" file="$(find eval_spkf)/config/spkf_config.yaml" />
   </node>
-  
-  
+
+
   <!-- Load reasonable defaults for the relative pose between cameras -->
   <include file="$(find oni_vicon_playback)/launch/arm_rgbd_frames.launch">
     <param name="camera" type="string" value="/$(arg camera)"/>
