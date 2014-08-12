@@ -440,6 +440,13 @@ public:
         spkfInternals->occTest->filter(measurement, measurementModel->predict());
         spkfInternals->occTest->o_t_ = spkfInternals->occTest->o_t_.array() * measurementModel->mask().array();
 
+        // re normalize orientation quaternion
+        tf::Quaternion spkf_q(stateDesc.mean()(3, 0), stateDesc.mean()(4, 0), stateDesc.mean()(5, 0), stateDesc.mean()(6, 0));
+        spkf_q = spkf_q.normalize();
+        stateDesc.mean()(3, 0) = spkf_q.getX();
+        stateDesc.mean()(4, 0) = spkf_q.getY();
+        stateDesc.mean()(5, 0) = spkf_q.getZ();
+        stateDesc.mean()(6, 0) = spkf_q.getW();
 
 //        std::cout << "e "
 //                  << stateDesc.mean()(0, 0) << " "
@@ -812,8 +819,8 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
     // too old. ros merely throws them away. how cruel is that?!
     ros::Time startup_time = ros::Time::now();
 
-    EvalRunSpkfFilter evalRunSpkf;
-    EvalRunRbpfFilter evalRunRbpf;
+    //EvalRunSpkfFilter evalRunSpkf;
+    //EvalRunRbpfFilter evalRunRbpf;
     bool init = false;
 
     while (ros::ok() && !play_as_.isPreemptRequested() && playback_->isPlaying())
@@ -885,6 +892,7 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
         feedback.current_depth_sensor_frame = frame_id;
         play_as_.publishFeedback(feedback);
 
+        /*
         if (!paused_)
         {
             if (!init)
@@ -962,6 +970,7 @@ void OniViconPlaybackServer::playCb(const PlayGoalConstPtr& goal)
                         0, 0, 1);
             }
         }
+        */
     }
 
     paused_ = false;
